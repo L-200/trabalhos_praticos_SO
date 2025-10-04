@@ -9,19 +9,20 @@ typedef struct {
     int quantidade;
 } EstoqueProduto;
 
-// Estrutura para passar argumentos para as threads de venda
+// estrutura para passar argumentos para as threads de venda
 typedef struct {
     int id;
     int total_a_vender; 
 } VendaArgs;
 
-// Estrutura para passar argumentos para as threads de consulta (leitores)
+// estrutura para passar argumentos para as threads de consulta
 typedef struct {
     int id;
     int num_leituras; 
 } ConsultaArgs;
 
 EstoqueProduto estoque_compartilhado;
+pthread_mutex_t mutex_venda; // mutex usado apenas pelas vendas
 
 void *realizar_venda(void *arg) {
     VendaArgs *args = (VendaArgs *)arg;
@@ -31,23 +32,33 @@ void *realizar_venda(void *arg) {
 
     printf("[VENDA %d]: Thread iniciada. Tentará vender %d itens.\n", id, total_vendas);
 
-    int estoque_no_momento_da_leitura = estoque_compartilhado.quantidade;
-    printf("[VENDA %d]: Leu o estoque. Valor: %d\n", id, estoque_no_momento_da_leitura);
-    
-    if (estoque_no_momento_da_leitura >= total_vendas) {
-        printf("[VENDA %d]: Estoque suficiente. Processando a baixa...\n", id);
+    // tenta adquirir o lock
+    printf("[VENDA %d]: Aguardando para entrar na região crítica...\n", id);
+    pthread_mutex_lock(&mutex_venda);
 
-        // Notificação de que a thread vai dormir
-        printf("[VENDA %d]: Dormindo por 2 segundos para criar condição de corrida...\n", id);
-        sleep(2); 
+    // inicio da região crítica
+    printf("\n[VENDA %d]: ENTROU NA REGIÃO CRÍTICA. O estoque neste momento é: %d\n", id, estoque_compartilhado.quantidade);
+    
+    if (estoque_compartilhado.quantidade >= total_vendas) {
+        printf("[VENDA %d]: Estoque suficiente. Processando a venda...\n", id);
+        printf("[VENDA %d]: QUANTIDADE APÓS A VENDA: %d\n", id, estoque_compartilhado.quantidade - total_vendas);
+
+        // a thread dorme depois de verificar o estoque para simular um atraso na venda
+        // as threads de consulta que executarem agora vãp ler um valor sujo
+        printf("[VENDA %d]: DORMINDO por 2 segundos ANTES de efetivar a baixa no estoque. Leitores podem ver valores antigos agora!\n", id);
+        sleep(1); 
+
+        estoque_compartilhado.quantidade -= total_vendas; 
         
-        estoque_compartilhado.quantidade = estoque_no_momento_da_leitura - total_vendas; 
-        
-        printf("[VENDA %d]: Venda de %d itens CONCLUÍDA. Estoque DEVERIA ser atualizado para: %d\n", id, total_vendas, estoque_compartilhado.quantidade);
+        printf("\n[VENDA %d]: Venda de %d itens CONCLUÍDA. Estoque atualizado para: %d\n", id, total_vendas, estoque_compartilhado.quantidade);
         
     } else {
-        printf("[VENDA %d]: FALHA. Estoque no momento da leitura (%d) era insuficiente para %d vendas.\n", id, estoque_no_momento_da_leitura, total_vendas);
+        printf("[VENDA %d]: FALHA. Estoque inicial (%d) insuficiente para processar %d vendas.\n", id, estoque_compartilhado.quantidade, total_vendas);
     }
+    
+    printf("[VENDA %d]: SAINDO da sua região crítica.\n\n", id);
+    //  fim da região crítica
+    pthread_mutex_unlock(&mutex_venda);
 
     free(arg);
     pthread_exit(NULL);
@@ -59,18 +70,13 @@ void *consultar_estoque(void *arg) {
     int num_leituras = args->num_leituras;
     int estoque_lido;
 
-    printf("[CONSULTA %d]: Iniciada. Fará %d leituras.\n", id, num_leituras);
-
-    // Notificação de que a thread vai dormir
-    printf("[CONSULTA %d]: Aguardando 2 segundos para iniciar as leituras...\n", id);
     sleep(2); 
+
+    printf("[CONSULTA %d]: Iniciada. Fará %d leituras para monitorar o estoque ao longo da simulaçãp.\n", id, num_leituras);
 
     for (int i = 0; i < num_leituras; i++) {
         estoque_lido = estoque_compartilhado.quantidade;
         printf("    [CONSULTA %d]: Estoque lido: %d\n", id, estoque_lido);
-        
-        // Notificação de que a thread vai dormir
-        printf("    [CONSULTA %d]: Dormindo por 1 segundo antes da proxima leitura.\n", id);
         sleep(1);
     }
 
@@ -79,16 +85,16 @@ void *consultar_estoque(void *arg) {
     pthread_exit(NULL);
 }
 
+
 int main() {
-    printf("Cenário: Múltiplas vendas (escritores) e consultas (leitores) sem NENHUM controle de concorrência.\n");
-    printf("Isto irá demonstrar CONDIÇÃO DE CORRIDA e LEITURA SUJA.\n");
-    printf("------------------------------------------------------------------\n");
+    printf("Cenário: e-commerce onde as vendas estão protegidas pelo mutex mas as consultas não.\n");
+    printf("-------------\n");
 
     int num_consultas, num_vendas, total_vendas_por_thread;
 
     printf("Digite a quantidade de produtos no estoque inicial: ");
     scanf("%d", &estoque_compartilhado.quantidade);
-    
+
     printf("Digite a quantidade de threads de Consulta (leitoras): ");
     scanf("%d", &num_consultas);
 
@@ -99,21 +105,24 @@ int main() {
     scanf("%d", &total_vendas_por_thread);
 
     int estoque_inicial = estoque_compartilhado.quantidade;
-    int leituras_por_thread = num_vendas + 2; // Aumentado para ler por mais tempo
+    int leituras_por_thread = num_vendas;
+
+    pthread_mutex_init(&mutex_venda, NULL);
+    srand(time(NULL));
 
     pthread_t threads[num_consultas + num_vendas];
     printf("\n--- Iniciando simulação ---\n");
     printf("Estoque inicial: %d\n\n", estoque_compartilhado.quantidade);
-    
-    // Criando as threads de consulta (leitores)
-    for (int i = 0; i < num_consultas; i++) {
+
+    // criando as threads de consulta (leitores SEM mutex)
+   for (int i = 0; i < num_consultas; i++) {
         ConsultaArgs *args = malloc(sizeof(ConsultaArgs));
         args->id = i + 1;
         args->num_leituras = leituras_por_thread;
         pthread_create(&threads[i], NULL, consultar_estoque, (void *)args);
     }
 
-    // Criando as threads de venda (escritores)
+    // criando as threads de venda (escritores COM mutex)
     for (int i = 0; i < num_vendas; i++) {
         VendaArgs *args = malloc(sizeof(VendaArgs));
         args->id = i + 1;
@@ -125,14 +134,13 @@ int main() {
         pthread_join(threads[i], NULL);
     }
 
-    int estoque_esperado = estoque_inicial - (num_vendas * total_vendas_por_thread);
+    pthread_mutex_destroy(&mutex_venda);
 
     printf("\n--- Simulação finalizada ---\n");
-    printf("Estoque inicial era: %d\n", estoque_inicial);
-    printf("Estoque final real: %d\n", estoque_compartilhado.quantidade);
-    printf("Estoque final esperado: %d\n", estoque_esperado);
+    printf("Estoque inicial: %d\n", estoque_inicial);
+    printf("Estoque final: %d\n", estoque_compartilhado.quantidade);
     printf("\n");
-    printf("Observe o estoque final incorreto (condição de corrida) e as leituras inconsistentes das threads de consulta (leitura suja).\n");
+    printf("Observe se alguma thread de consulta leu o valor errado após uma thread de venda marcar que ele (o valor) seria mudado após uma venda entrar em sua região crítica.\n");
  
     return 0;
 }
