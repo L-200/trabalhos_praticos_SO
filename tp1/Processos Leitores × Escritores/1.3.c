@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-// estrutura para a variável compartilhada
+// Estrutura para a variável compartilhada
 typedef struct {
     int quantidade;
 } EstoqueProduto;
@@ -15,13 +15,9 @@ typedef struct {
     int total_a_vender; 
 } VendaArgs;
 
-// Estrutura para passar argumentos para as threads de consulta (leitores)
-typedef struct {
-    int id;
-    int num_leituras; 
-} ConsultaArgs;
-
 EstoqueProduto estoque_compartilhado;
+
+// NENHUM MUTEX É DECLARADO NESTA VERSÃO
 
 void *realizar_venda(void *arg) {
     VendaArgs *args = (VendaArgs *)arg;
@@ -31,16 +27,21 @@ void *realizar_venda(void *arg) {
 
     printf("[VENDA %d]: Thread iniciada. Tentará vender %d itens.\n", id, total_vendas);
 
+    // --- INÍCIO DA REGIÃO CRÍTICA (SEM PROTEÇÃO) ---
+
+    // 1. Lê o valor atual do estoque para uma variável local.
+    // Várias threads podem ler o MESMO valor aqui antes que qualquer uma delas o atualize.
     int estoque_no_momento_da_leitura = estoque_compartilhado.quantidade;
     printf("[VENDA %d]: Leu o estoque. Valor: %d\n", id, estoque_no_momento_da_leitura);
     
     if (estoque_no_momento_da_leitura >= total_vendas) {
         printf("[VENDA %d]: Estoque suficiente. Processando a baixa...\n", id);
 
-        // Notificação de que a thread vai dormir
-        printf("[VENDA %d]: Dormindo por 2 segundos para criar condição de corrida...\n", id);
+        // 2. Dorme por um curto período para aumentar a chance de outra thread executar
+        // e ler o valor antigo do estoque, criando uma condição de corrida.
         sleep(2); 
         
+        // 3. Atualiza o estoque com base no valor lido anteriormente (que pode estar desatualizado).
         estoque_compartilhado.quantidade = estoque_no_momento_da_leitura - total_vendas; 
         
         printf("[VENDA %d]: Venda de %d itens CONCLUÍDA. Estoque DEVERIA ser atualizado para: %d\n", id, total_vendas, estoque_compartilhado.quantidade);
@@ -48,49 +49,23 @@ void *realizar_venda(void *arg) {
     } else {
         printf("[VENDA %d]: FALHA. Estoque no momento da leitura (%d) era insuficiente para %d vendas.\n", id, estoque_no_momento_da_leitura, total_vendas);
     }
+    
+    // --- FIM DA REGIÃO CRÍTICA (SEM PROTEÇÃO) ---
 
     free(arg);
     pthread_exit(NULL);
 }
 
-void *consultar_estoque(void *arg) {
-    ConsultaArgs *args = (ConsultaArgs *)arg;
-    int id = args->id;
-    int num_leituras = args->num_leituras;
-    int estoque_lido;
-
-    printf("[CONSULTA %d]: Iniciada. Fará %d leituras.\n", id, num_leituras);
-
-    // Notificação de que a thread vai dormir
-    printf("[CONSULTA %d]: Aguardando 2 segundos para iniciar as leituras...\n", id);
-    sleep(2); 
-
-    for (int i = 0; i < num_leituras; i++) {
-        estoque_lido = estoque_compartilhado.quantidade;
-        printf("    [CONSULTA %d]: Estoque lido: %d\n", id, estoque_lido);
-        
-        // Notificação de que a thread vai dormir
-        printf("    [CONSULTA %d]: Dormindo por 1 segundo antes da proxima leitura.\n", id);
-        sleep(1);
-    }
-
-    printf("[CONSULTA %d]: Finalizada.\n", id);
-    free(arg);
-    pthread_exit(NULL);
-}
 
 int main() {
-    printf("Cenário: Múltiplas vendas (escritores) e consultas (leitores) sem NENHUM controle de concorrência.\n");
-    printf("Isto irá demonstrar CONDIÇÃO DE CORRIDA e LEITURA SUJA.\n");
+    printf("Cenário: Múltiplas vendas (escritores) sem NENHUM controle de concorrência.\n");
+    printf("Isto irá demonstrar uma CONDIÇÃO DE CORRIDA (race condition).\n");
     printf("------------------------------------------------------------------\n");
 
-    int num_consultas, num_vendas, total_vendas_por_thread;
+    int num_vendas, total_vendas_por_thread;
 
     printf("Digite a quantidade de produtos no estoque inicial: ");
     scanf("%d", &estoque_compartilhado.quantidade);
-    
-    printf("Digite a quantidade de threads de Consulta (leitoras): ");
-    scanf("%d", &num_consultas);
 
     printf("Digite a quantidade de threads de Venda (escritoras): ");
     scanf("%d", &num_vendas);
@@ -99,31 +74,26 @@ int main() {
     scanf("%d", &total_vendas_por_thread);
 
     int estoque_inicial = estoque_compartilhado.quantidade;
-    int leituras_por_thread = num_vendas + 2; // Aumentado para ler por mais tempo
 
-    pthread_t threads[num_consultas + num_vendas];
+    // NENHUM MUTEX É INICIALIZADO
+
+    pthread_t threads_venda[num_vendas];
     printf("\n--- Iniciando simulação ---\n");
     printf("Estoque inicial: %d\n\n", estoque_compartilhado.quantidade);
-    
-    // Criando as threads de consulta (leitores)
-    for (int i = 0; i < num_consultas; i++) {
-        ConsultaArgs *args = malloc(sizeof(ConsultaArgs));
-        args->id = i + 1;
-        args->num_leituras = leituras_por_thread;
-        pthread_create(&threads[i], NULL, consultar_estoque, (void *)args);
-    }
 
-    // Criando as threads de venda (escritores)
+    // Criando apenas as threads de venda (escritores)
     for (int i = 0; i < num_vendas; i++) {
         VendaArgs *args = malloc(sizeof(VendaArgs));
         args->id = i + 1;
         args->total_a_vender = total_vendas_por_thread;
-        pthread_create(&threads[num_consultas + i], NULL, realizar_venda, (void *)args);
+        pthread_create(&threads_venda[i], NULL, realizar_venda, (void *)args);
     }
 
-    for (int i = 0; i < (num_consultas + num_vendas); i++) {
-        pthread_join(threads[i], NULL);
+    for (int i = 0; i < num_vendas; i++) {
+        pthread_join(threads_venda[i], NULL);
     }
+
+    // NENHUM MUTEX É DESTRUÍDO
 
     int estoque_esperado = estoque_inicial - (num_vendas * total_vendas_por_thread);
 
@@ -132,7 +102,7 @@ int main() {
     printf("Estoque final real: %d\n", estoque_compartilhado.quantidade);
     printf("Estoque final esperado: %d\n", estoque_esperado);
     printf("\n");
-    printf("Observe o estoque final incorreto (condição de corrida) e as leituras inconsistentes das threads de consulta (leitura suja).\n");
+    printf("Se o estoque final real for diferente do esperado, a condição de corrida ocorreu e vendas foram 'perdidas'.\n");
  
     return 0;
 }
