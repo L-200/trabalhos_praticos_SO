@@ -12,12 +12,14 @@ typedef struct {
 // estrutura para passar argumentos para as threads de venda
 typedef struct {
     int id;
+    int id_fake;
     int total_a_vender; 
 } VendaArgs;
 
 // estrutura para passar argumentos para as threads de consulta
 typedef struct {
     int id;
+    int id_fake;
     int num_leituras; 
 } ConsultaArgs;
 
