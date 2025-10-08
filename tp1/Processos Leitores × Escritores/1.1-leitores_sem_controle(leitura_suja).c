@@ -70,9 +70,8 @@ void *consultar_estoque(void *arg) {
     int num_leituras = args->num_leituras;
     int estoque_lido;
 
-    sleep(2); 
-
-    printf("[CONSULTA %d]: Iniciada. Fará %d leituras para monitorar o estoque ao longo da simulaçãp.\n", id, num_leituras);
+    sleep(1);
+    printf("[CONSULTA %d]: Iniciada. Fará %d leituras para monitorar o estoque ao longo da simulação.\n", id, num_leituras);
 
     for (int i = 0; i < num_leituras; i++) {
         estoque_lido = estoque_compartilhado.quantidade;
