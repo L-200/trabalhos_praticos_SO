@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-// Definições e Variáveis Globais para o buffer e sincronização
+// Definições e variáveis globais para o buffer e sincronização
 #define TAMANHO_BUFFER 10 
 int buffer[TAMANHO_BUFFER];
 int in = 0;
@@ -15,7 +15,7 @@ pthread_mutex_t mutex;
 pthread_cond_t cond_nao_cheio;  //Para produtores esperarem se o buffer estiver cheio
 pthread_cond_t cond_nao_vazio; //Para consumidores esperarem se o buffer estiver vazio
 
-// Estruturas de Argumentos (sem alteração)
+// Estruturas de Argumentos
 typedef struct {
     int id;
     int total_a_produzir; 
@@ -88,7 +88,7 @@ void *produzir(void *arg) {
     pthread_exit(NULL);
 } 
 
-// Função de Thread Consumidora
+// Função de thread consumidora
 void *consumir(void *arg) {
     ConsumidorArgs *args = (ConsumidorArgs *)arg;
     int id = args->id;
@@ -130,7 +130,7 @@ void *consumir(void *arg) {
     pthread_exit(NULL);
 } 
 
-// Função Principal (main)
+// Função Principal
 int main() {
     int num_produtores, total_produzir_por_thread, total_consumir;
     int num_consumidores = 1; 
