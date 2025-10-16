@@ -10,7 +10,6 @@ int buffer[TAMANHO_BUFFER];
 int in = 0;
 int out = 0;
 
-// MUDANÇA: Contadores globais para auditoria final (também desprotegidos)
 int g_itens_produzidos_total = 0;
 int g_itens_consumidos_total = 0;
 int g_dados_sobrescritos = 0;
@@ -29,7 +28,7 @@ void exibir_buffer() {
     printf("  [BUFFER]: [");
     for (int i = 0; i < TAMANHO_BUFFER; i++) { printf(" %2d%s", buffer[i], (i < TAMANHO_BUFFER - 1) ? "," : ""); }
     printf(" ]\n");
-    printf("    -> Inserção (in): %d, Remoção (out): %d\n\n", in, out);
+    printf("    -> Inserção (in): %d, Remoção (out): %d\n", in, out);
 }
 
 // --- Função de Thread Produtora ---
@@ -38,30 +37,37 @@ void *produzir(void *arg) {
     int total_a_produzir = args->total_a_produzir;
 
     for (int i = 0; i < total_a_produzir; i++) {
-        // MUDANÇA: A thread "pega" o ponteiro 'in' atual. Isso é o início da condição de corrida.
+        // MENSAGEM DE STATUS: Entrando na Região Crítica
+        printf("\n[PRODUTOR %d]: Status: ATIVO. >>> TENTANDO ENTRAR NA REGIÃO CRÍTICA <<<\n", args->id);
+
         int posicao_alvo = in;
+        printf("[PRODUTOR %d]: Planejando inserir na posição %d. Estado ATUAL do buffer:\n", args->id, posicao_alvo);
+        exibir_buffer();
 
-        // A pausa aumenta a chance de outra thread alterar 'in' enquanto esta dorme.
+        // MENSAGEM DE STATUS: Dormindo
+        printf("[PRODUTOR %d]: Status: DORMINDO (simulando I/O ou processamento demorado).\n", args->id);
         sleep(1);
+        printf("[PRODUTOR %d]: Status: ACORDOU. Retomando produção.\n", args->id);
 
-        // Gera o item a ser produzido
         int item_produzido = (rand() % 100) + 1;
 
-        // DETECÇÃO DE PROBLEMA: Verifica se o local no buffer já está ocupado por um item válido
         if (buffer[posicao_alvo] != -1) {
             printf("!!! SOBRESCRITA DETECTADA: Posição %d já continha %d, será sobrescrito por %d !!!\n",
                    posicao_alvo, buffer[posicao_alvo], item_produzido);
             g_dados_sobrescritos++;
         }
 
-        // Escreve no buffer usando a cópia local do ponteiro. Isso evita o segfault.
         buffer[posicao_alvo] = item_produzido;
-        printf("[PRODUTOR %d]: Inseriu item %d na posição %d.\n", args->id, item_produzido, posicao_alvo);
-
-        // Atualiza o ponteiro global de forma insegura.
-        in = (posicao_alvo + 1) % TAMANHO_BUFFER;
         
-        g_itens_produzidos_total++; // Esta operação (leitura-modificação-escrita) também tem race condition!
+        // MENSAGEM DE STATUS: Produzindo
+        printf("[PRODUTOR %d]: Status: PRODUZINDO. Inseriu item %d na posição %d. Estado NOVO do buffer:\n", args->id, item_produzido, posicao_alvo);
+        exibir_buffer();
+
+        in = (posicao_alvo + 1) % TAMANHO_BUFFER;
+        g_itens_produzidos_total++;
+
+        // MENSAGEM DE STATUS: Saindo da Região Crítica
+        printf("[PRODUTOR %d]: Status: FINALIZADO. <<< SAINDO DA REGIÃO CRÍTICA >>>\n", args->id);
     }
     free(arg);
     pthread_exit(NULL);
@@ -73,28 +79,37 @@ void *consumir(void *arg) {
     int total_a_consumir = args->total_a_consumir;
 
     for (int i = 0; i < total_a_consumir; i++) {
-        // A thread "pega" o ponteiro 'out' atual.
+        // MENSAGEM DE STATUS: Entrando na Região Crítica
+        printf("\n[CONSUMIDOR %d]: Status: ATIVO. >>> TENTANDO ENTRAR NA REGIÃO CRÍTICA <<<\n", args->id);
+        
         int posicao_alvo = out;
+        printf("[CONSUMIDOR %d]: Planejando consumir da posição %d. Estado ATUAL do buffer:\n", args->id, posicao_alvo);
+        exibir_buffer();
 
+        // MENSAGEM DE STATUS: Dormindo
+        printf("[CONSUMIDOR %d]: Status: DORMINDO (aguardando item ou simulando processamento).\n", args->id);
         sleep(1);
+        printf("[CONSUMIDOR %d]: Status: ACORDOU. Retomando consumo.\n", args->id);
 
         int item_consumido = buffer[posicao_alvo];
 
-        // Se o item for -1, significa que outro consumidor já limpou essa posição
-        // ou um produtor ainda não escreveu lá. Em ambos os casos, é um erro de consumo.
         if (item_consumido == -1) {
             printf("!!! CONSUMO INVÁLIDO DETECTADO: [CONSUMIDOR %d] tentou ler da posição %d que já estava vazia!!!\n",
                    args->id, posicao_alvo);
         } else {
-            printf("[CONSUMIDOR %d]: Consumiu item %d da posição %d.\n", args->id, item_consumido, posicao_alvo);
+            // MENSAGEM DE STATUS: Consumindo
+            printf("[CONSUMIDOR %d]: Status: CONSUMINDO. Consumiu item %d da posição %d.\n", args->id, item_consumido, posicao_alvo);
         }
         
-        buffer[posicao_alvo] = -1; // Marca como vazio
-
-        // Atualiza o ponteiro global de forma insegura.
-        out = (posicao_alvo + 1) % TAMANHO_BUFFER;
+        buffer[posicao_alvo] = -1;
+        printf("[CONSUMIDOR %d]: Finalizou consumo na posição %d. Estado NOVO do buffer:\n", args->id, posicao_alvo);
+        exibir_buffer();
         
-        g_itens_consumidos_total++; // Race condition aqui também!
+        out = (posicao_alvo + 1) % TAMANHO_BUFFER;
+        g_itens_consumidos_total++;
+
+        // MENSAGEM DE STATUS: Saindo da Região Crítica
+        printf("[CONSUMIDOR %d]: Status: FINALIZADO. <<< SAINDO DA REGIÃO CRÍTICA >>>\n", args->id);
     }
     free(arg);
     pthread_exit(NULL);
@@ -113,7 +128,8 @@ int main() {
     scanf("%d", &total_produzir_por_thread);
 
     int total_itens_esperados = num_produtores * total_produzir_por_thread;
-    int total_a_consumir_por_thread = total_itens_esperados / num_consumidores;
+    // Garante que pelo menos um item seja consumido por thread se possível
+    int total_a_consumir_por_thread = (num_consumidores > 0) ? (total_itens_esperados / num_consumidores) : 0;
     
     srand(time(NULL));
 
@@ -122,6 +138,9 @@ int main() {
     pthread_t threads[num_produtores + num_consumidores];
     
     printf("\n--- Iniciando simulação ---\n");
+    printf("Buffer Inicial:\n");
+    exibir_buffer(); 
+
 
     for (int i = 0; i < num_produtores; i++) {
         ProdutorArgs *args = malloc(sizeof(ProdutorArgs));
@@ -154,7 +173,7 @@ int main() {
         }
     }
     printf("Itens que restaram no buffer: %d\n", itens_restantes_no_buffer);
-    printf("Total de itens perdidos (Esperado - Restantes): %d\n", total_itens_esperados - itens_restantes_no_buffer);
+    printf("Total de itens perdidos (Esperado - Consumidos - Restantes): %d\n", total_itens_esperados - (g_itens_consumidos_total - g_dados_sobrescritos) - itens_restantes_no_buffer);
 
     printf("\nEstado final do buffer:\n");
     exibir_buffer();
