@@ -37,7 +37,7 @@ void *produzir(void *arg) {
         printf("[PRODUTOR %d]: STATUS - Produzindo\n", id);
         int in_antes = in;
         printf("[PRODUTOR %d]: Planeja inserir na posição %d.\n", id, in_antes);
-        printf("[PRODUTOR %d]: STATUS - Pausando (simulando trabalho)...\n", id);
+        printf("[PRODUTOR %d]: STATUS - Dormindo ...\n", id);
         sleep(1); 
         
         if (in != in_antes) {
@@ -47,9 +47,13 @@ void *produzir(void *arg) {
         }
 
         printf("[PRODUTOR %d]: Entrou na Região Crítica para escrever.\n", id);
+        
         int item_produzido = (rand() % 100) + 1;
         buffer[in_antes] = item_produzido; 
         in = (in_antes + 1) % TAMANHO_BUFFER;
+
+        printf("[PRODUTOR %d]: Saiu da Região Crítica.\n", id);
+        
         exibir_buffer();
     }
     free(arg);
@@ -66,7 +70,7 @@ void *consumir(void *arg) {
         printf("[CONSUMIDOR %d]: STATUS - Consumindo\n", id);
         int out_antes = out;
         printf("[CONSUMIDOR %d]: Planeja consumir da posição %d.\n", id, out_antes);
-        printf("[CONSUMIDOR %d]: STATUS - Dormindo ...\n", id);
+        printf("[CONSUMIDOR %d]: STATUS - Pausando (simulando trabalho)...\n", id);
         sleep(1);
         
         if (out != out_antes) {
@@ -76,10 +80,14 @@ void *consumir(void *arg) {
         }
 
         printf("[CONSUMIDOR %d]: Entrou na Região Crítica para ler.\n", id);
+
         int item_consumido = buffer[out_antes];
         buffer[out_antes] = -1;
         out = (out_antes + 1) % TAMANHO_BUFFER;
-        printf("[CONSUMIDOR %d]: Consumiu item %d da pos %d.\n", id, item_consumido, out_antes);
+
+        // NOVO: Adicionada a mensagem de saída da Região Crítica
+        printf("[CONSUMIDOR %d]: Consumiu item %d da pos %d e Saiu da Região Crítica.\n", id, item_consumido, out_antes);
+        
         exibir_buffer();
     }
     free(arg);
@@ -131,7 +139,6 @@ int main() {
     }
     
     printf("\n--- Simulação finalizada ---\n");
-
     printf("Total de itens que deveriam ter sido produzidos/consumidos: %d\n", total_itens_processados);
     printf("Compare o valor acima com o estado final do buffer para ver a falha do sistema.\n");
     
