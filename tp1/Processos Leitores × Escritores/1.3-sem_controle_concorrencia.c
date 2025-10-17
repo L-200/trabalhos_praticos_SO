@@ -28,6 +28,7 @@ void *realizar_venda(void *arg) {
     printf("[VENDA %d]: Thread iniciada. Tentará vender %d itens.\n", id, total_vendas);
 
     //região crítica SEM PROTEÇÃO (SEM MUTEX)
+    printf("[VENDA %d]: Entrou na região crítica SEM PROTEÇÃO (SEM MUTEX).\n", id);
     int estoque_no_momento_da_leitura = estoque_compartilhado.quantidade;
     printf("[VENDA %d]: Leu o estoque. Valor: %d\n", id, estoque_no_momento_da_leitura);
     
@@ -45,6 +46,7 @@ void *realizar_venda(void *arg) {
         printf("[VENDA %d]: FALHA. Estoque no momento da leitura (%d) era insuficiente para %d vendas.\n", id, estoque_no_momento_da_leitura, total_vendas);
     }
     
+    printf("[VENDA %d]: Saindo da região crítica SEM PROTEÇÃO (SEM MUTEX).\n", id);
     // fim da região crítica SEM PROTEÇÃO (SEM MUTEX)
 
     free(arg);
