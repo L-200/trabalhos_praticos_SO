@@ -157,7 +157,6 @@ int main() {
     srand(time(NULL)); 
 
     // Inicializa o mutex e os semáforos
-    // CORRIGIDO: Inicializa Mutex e Variáveis de Condição
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond_nao_cheio, NULL);
     pthread_cond_init(&cond_nao_vazio, NULL);
@@ -196,7 +195,6 @@ int main() {
     } 
 
     // Destroi os recursos de sincronização
-    // CORRIGIDO: Destrói Mutex e Variáveis de Condição
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&cond_nao_cheio);
     pthread_cond_destroy(&cond_nao_vazio);
