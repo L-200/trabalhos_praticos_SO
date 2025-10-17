@@ -119,7 +119,7 @@ void *consumir(void *arg) {
 int main() {
     int num_produtores, num_consumidores, total_produzir_por_thread;
     
-    printf("== Simulação de falha lógica ==\n");
+    printf("== Simulação de race condition com buffer ==\n");
     printf("Digite a quantidade de threads produtoras: ");
     scanf("%d", &num_produtores);
     printf("Digite a quantidade de threads consumidoras: ");
