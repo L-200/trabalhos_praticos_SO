@@ -69,12 +69,11 @@ void *produzir(void *arg) {
 
         // Região Crítica: Inserção
         buffer[in] = item_produzido;
+        sleep(1); 
         printf("[PRODUTOR %d]: Status: PRODUZINDO/Dentro da RC. Inserindo item %d na pos %d\n", id, item_produzido, in);
         in = (in + 1) % TAMANHO_BUFFER;
         
         exibir_buffer(); 
-        
-        sleep(1); 
 
         // Status: Saindo da Região Crítica
         printf("[PRODUTOR %d]: Status: SAINDO da RC. Sinalizando item cheio.\n", id);
@@ -110,12 +109,11 @@ void *consumir(void *arg) {
         // Região Crítica: Remoção
         item_consumido = buffer[out];
         buffer[out] = -1; // Marca a posição como vazia
+        sleep(1); 
         printf("[CONSUMIDOR %d]: ENTROU na RC. Consumiu item %d na pos %d\n", id, item_consumido, out);
         out = (out + 1) % TAMANHO_BUFFER; 
         
         exibir_buffer(); 
-        
-        sleep(1); 
 
         // Status: Saindo da Região Crítica
         printf("[CONSUMIDOR %d]: Status: SAINDO da RC. Sinalizando espaço vazio.\n", id);
