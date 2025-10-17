@@ -68,8 +68,8 @@ void *produzir(void *arg) {
         pthread_mutex_lock(&mutex); 
 
         // Região Crítica: Inserção
-        buffer[in] = item_produzido;
         sleep(1); 
+        buffer[in] = item_produzido;
         printf("[PRODUTOR %d]: Status: PRODUZINDO/Dentro da RC. Inserindo item %d na pos %d\n", id, item_produzido, in);
         in = (in + 1) % TAMANHO_BUFFER;
         
@@ -108,8 +108,8 @@ void *consumir(void *arg) {
 
         // Região Crítica: Remoção
         item_consumido = buffer[out];
-        buffer[out] = -1; // Marca a posição como vazia
         sleep(1); 
+        buffer[out] = -1; // Marca a posição como vazia
         printf("[CONSUMIDOR %d]: ENTROU na RC. Consumiu item %d na pos %d\n", id, item_consumido, out);
         out = (out + 1) % TAMANHO_BUFFER; 
         
