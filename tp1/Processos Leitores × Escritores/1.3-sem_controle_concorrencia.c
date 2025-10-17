@@ -35,7 +35,7 @@ void *realizar_venda(void *arg) {
     if (estoque_no_momento_da_leitura >= total_vendas) {
         printf("    [VENDA %d]: Estoque suficiente. Processando a baixa...\n", id);
         printf("    [VENDA %d]: QUANTIDADE APÓS A VENDA DEVERIA SER: %d\n", id, estoque_no_momento_da_leitura - total_vendas);
-
+        printf("    [VENDA %d]: DORMINDO, race condition provavelmente ocorrerá agora\n", id);
         // a thread dorme depois de verificar o estoque para simular um atraso na venda
         sleep(1); // simula o tempo de processamento da venda
         
