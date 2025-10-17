@@ -3,17 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <semaphore.h> 
 
-// Definições e Variáveis Globais para o buffer e sincronização
+// Definições e variáveis globais para o buffer e sincronização
 #define TAMANHO_BUFFER 10 
 int buffer[TAMANHO_BUFFER];
 int in = 0;
 int out = 0; 
+int count = 0; // contador de itens no buffer
 
 pthread_mutex_t mutex;
-sem_t full;
-sem_t empty; 
+pthread_cond_t cond_nao_cheio;  //Para produtores esperarem se o buffer estiver cheio
+pthread_cond_t cond_nao_vazio; //Para consumidores esperarem se o buffer estiver vazio
 
 // Estruturas de Argumentos
 typedef struct {
@@ -26,19 +26,15 @@ typedef struct {
     int total_a_consumir; 
 } ConsumidorArgs; 
 
-// Protótipos das funções
 void *produzir(void *arg);
 void *consumir(void *arg);
 void exibir_buffer(); 
 
-// Função Auxiliar: Exibe o estado atual do buffer
 void exibir_buffer() { 
     printf("  [BUFFER]: ["); 
 
     for (int i = 0; i < TAMANHO_BUFFER; i++) {
-        
         printf(" %d", buffer[i]); 
-
         if (i < TAMANHO_BUFFER - 1) {
             printf(",");
         }
@@ -47,6 +43,7 @@ void exibir_buffer() {
     
     printf("           -> Inserção (in): %d\n", in);
     printf("           -> Remoção (out): %d\n", out);
+    printf("           -> Itens no buffer (count): %d\n", count);
 }
 
 
@@ -59,37 +56,39 @@ void *produzir(void *arg) {
     for (int i = 0; i < total_a_produzir; i++) {
         int item_produzido = (rand() % 100) + 1; 
         
-        // Status: Verificando e podendo bloquear (dormir)
-        printf("[PRODUTOR %d]: Status: Verificando espaco (sem_empty). Pode ir DORMIR.\n", id);
-        sem_wait(&empty); 
-        
-        // Status: Acordou e tenta acesso exclusivo
-        printf("[PRODUTOR %d]: Status: ACORDOU/Prosseguiu. Tentando ENTRAR na RC.\n", id);
+        // Lógica de espera com mutex e variável de condição
         pthread_mutex_lock(&mutex); 
+        printf("[PRODUTOR %d]: Status: Tentando ENTRAR na RC. Verificando se buffer esta cheio.\n", id);
+        
+        // Enquanto o buffer estiver cheio, espera
+        while (count == TAMANHO_BUFFER) {
+            printf("[PRODUTOR %d]: Status: Buffer CHEIO. Indo DORMIR (cond_wait).\n", id);
+            pthread_cond_wait(&cond_nao_cheio, &mutex);
+            printf("[PRODUTOR %d]: Status: ACORDOU. Verificando condicao novamente.\n", id);
+        }
 
         // Região Crítica: Inserção
         buffer[in] = item_produzido;
         printf("[PRODUTOR %d]: Status: PRODUZINDO/Dentro da RC. Inserindo item %d na pos %d\n", id, item_produzido, in);
-        sleep(1); 
+        sleep(1); // Simula o tempo de produção
         in = (in + 1) % TAMANHO_BUFFER;
+        count++; // Incrementa o contador
         
         exibir_buffer(); 
-
-        // Status: Saindo da Região Crítica
-        printf("[PRODUTOR %d]: Status: SAINDO da RC. Sinalizando item cheio.\n", id);
-        pthread_mutex_unlock(&mutex);
         
-        // Sinaliza um item cheio
-        sem_post(&full); 
+        //Sinaliza aos consumidores que o buffer não está mais vazio
+        printf("[PRODUTOR %d]: Status: SAINDO da RC. Sinalizando que buffer nao esta vazio (cond_signal).\n", id);
+        pthread_cond_signal(&cond_nao_vazio);
+        pthread_mutex_unlock(&mutex);
+         
     } 
 
-   // Status: Finalizando
     printf("[PRODUTOR %d]: Status: FINALIZADO.\n", id);
     free(arg);
     pthread_exit(NULL);
 } 
 
-// Função de Thread Consumidora
+// Função de thread consumidora
 void *consumir(void *arg) {
     ConsumidorArgs *args = (ConsumidorArgs *)arg;
     int id = args->id;
@@ -98,41 +97,41 @@ void *consumir(void *arg) {
 
     for (int i = 0; i < total_a_consumir; i++) {
         
-        // Status: Verificando e podendo bloquear (dormir)
-        printf("[CONSUMIDOR %d]: Status: Verificando item (sem_full). Pode ir DORMIR.\n", id);
-        sem_wait(&full); 
+        // Lógica de espera com mutex e variável de condição
+        pthread_mutex_lock(&mutex);
+        printf("[CONSUMIDOR %d]: Status: Tentando ENTRAR na RC. Verificando se buffer esta vazio.\n", id);
         
-        // Status: Acordou e tenta acesso exclusivo
-        printf("[CONSUMIDOR %d]: Status: ACORDOU/Prosseguiu. Tentando ENTRAR na RC.\n", id);
-        pthread_mutex_lock(&mutex); 
+        // Enquanto o buffer estiver vazio, espera
+        while (count == 0) {
+            printf("[CONSUMIDOR %d]: Status: Buffer VAZIO. Indo DORMIR (cond_wait).\n", id);
+            pthread_cond_wait(&cond_nao_vazio, &mutex);
+            printf("[CONSUMIDOR %d]: Status: ACORDOU. Verificando condicao novamente.\n", id);
+        }
 
         // Região Crítica: Remoção
         item_consumido = buffer[out];
         buffer[out] = -1; // Marca a posição como vazia
         printf("[CONSUMIDOR %d]: ENTROU na RC. Consumiu item %d na pos %d\n", id, item_consumido, out);
-        sleep(1); 
+        sleep(1); // Simula o tempo de consumo
         out = (out + 1) % TAMANHO_BUFFER; 
+        count--; // Decrementa o contador
         
         exibir_buffer(); 
-
-        // Status: Saindo da Região Crítica
-        printf("[CONSUMIDOR %d]: Status: SAINDO da RC. Sinalizando espaço vazio.\n", id);
-        pthread_mutex_unlock(&mutex);
         
-        // Sinaliza um espaço vazio
-        sem_post(&empty); 
+        // Sinaliza aos produtores que o buffer não está mais cheio
+        printf("[CONSUMIDOR %d]: Status: SAINDO da RC. Sinalizando que buffer nao esta cheio (cond_signal).\n", id);
+        pthread_cond_signal(&cond_nao_cheio);
+        pthread_mutex_unlock(&mutex);
+
     } 
 
-    // Status: Finalizando
     printf("[CONSUMIDOR %d]: Status: FINALIZADO.\n", id);
     free(arg);
     pthread_exit(NULL);
 } 
 
-// Função Principal (main) 
-
 int main() {
-    int num_produtores, num_consumidores, total_produzir_por_thread, total_produzir, total_consumir; 
+    int num_produtores, num_consumidores, total_produzir_por_thread, total_produzir, total_consumir_por_thread; 
 
     printf("--- Simulacao Produtores - Consumidores ---\n");
     printf("Tamanho do Buffer: %d\n", TAMANHO_BUFFER); 
@@ -140,30 +139,28 @@ int main() {
     printf("Digite a quantidade de threads Produtoras: ");
     scanf("%d", &num_produtores); 
 
-printf("Digite a quantidade de threads Consumidoras: ");
+    printf("Digite a quantidade de threads Consumidoras: ");
     scanf("%d", &num_consumidores); 
 
     printf("Digite a quantidade de itens que CADA Produtor ira gerar: ");
     scanf("%d", &total_produzir_por_thread); 
 
-    // Calcula o total de itens que o único consumidor deve processar 
-
+    // Calcula o total de itens a ser produzido
     total_produzir = num_produtores * total_produzir_por_thread; 
 
-    //Calcula o total por thread consumidora
-
-    total_consumir = total_produzir / num_consumidores; 
-
+    // Calcula o total por thread consumidora
+    total_consumir_por_thread = total_produzir / num_consumidores; 
 
     printf("\nTotal de itens a ser produzido: %d\n", total_produzir);
-    printf("\nTotal de itens a ser consumido (por 1 consumidor): %d\n", total_consumir);
+    printf("Total de itens a ser consumido POR CONSUMIDOR: %d\n", total_consumir_por_thread); 
     
     srand(time(NULL)); 
 
     // Inicializa o mutex e os semáforos
+    // CORRIGIDO: Inicializa Mutex e Variáveis de Condição
     pthread_mutex_init(&mutex, NULL);
-    sem_init(&full, 0, 0); 
-    sem_init(&empty, 0, TAMANHO_BUFFER); 
+    pthread_cond_init(&cond_nao_cheio, NULL);
+    pthread_cond_init(&cond_nao_vazio, NULL);
 
     // Inicializa o buffer com -1 para visualização
     for (int i = 0; i < TAMANHO_BUFFER; i++) {
@@ -180,7 +177,8 @@ printf("Digite a quantidade de threads Consumidoras: ");
     for (int i = 0; i < num_consumidores; i++) {
         ConsumidorArgs *args = malloc(sizeof(ConsumidorArgs));
         args->id = i + 1;
-        args->total_a_consumir = total_consumir;
+        // Atribui o total de consumo por thread
+        args->total_a_consumir = total_consumir_por_thread;
         pthread_create(&threads[i], NULL, consumir, (void *)args);
     }
     
@@ -198,12 +196,13 @@ printf("Digite a quantidade de threads Consumidoras: ");
     } 
 
     // Destroi os recursos de sincronização
+    // CORRIGIDO: Destrói Mutex e Variáveis de Condição
     pthread_mutex_destroy(&mutex);
-    sem_destroy(&full);
-    sem_destroy(&empty); 
+    pthread_cond_destroy(&cond_nao_cheio);
+    pthread_cond_destroy(&cond_nao_vazio);
 
     printf("\n--- Simulacao finalizada ---\n");
-    printf("Total de itens produzidos/consumidos: %d\n", total_consumir);
+    printf("Total de itens produzidos/consumidos: %d\n", total_produzir); // Exibe o total geral
     printf("\n");
 
     return 0;
