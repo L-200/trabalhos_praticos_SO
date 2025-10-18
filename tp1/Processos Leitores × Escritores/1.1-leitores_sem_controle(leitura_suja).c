@@ -1,4 +1,4 @@
-#EQUIPE: Lucas de Souza Cerveira Pereira, Mikaelle Costa de Santana e Pedro Gabriel Motta Vieira
+#EQUIPE Lucas de Souza Cerveira Pereira, Mikaelle Costa de Santana e Pedro Gabriel Motta Vieira
 
 #include <pthread.h>
 #include <stdio.h>
