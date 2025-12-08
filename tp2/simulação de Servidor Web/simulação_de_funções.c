@@ -1,7 +1,7 @@
 
 #include "simulation_functions.h"
 #include <stdio.h>
-#include <unistd.h> // Necessário para a função sleep()
+#include <unistd.h> 
 
 void processar_html(int req_id) {
     int tempo = 1; // 1 segundo
