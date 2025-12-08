@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include "simulador_de_funcoes.h" // Inclui as funções de simulação
+#include "simulação_de_funcoes.h" // Inclui as funções de simulação
 
 int main() {
     // Variáveis de medição de tempo
