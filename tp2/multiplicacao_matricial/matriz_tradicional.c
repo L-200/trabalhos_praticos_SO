@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -26,7 +27,7 @@ void preenche_matriz (int** matriz, int ordem) {
     for(int i = 0; i < ordem; i++) {
 
         for (j = 0; j < ordem; j++) {
-            matriz[i][j] = rand();
+            matriz[i][j] = rand() % 1000;
         }
     }
 
@@ -57,8 +58,8 @@ void free_matriz(int** matriz, int ordem) {
 
 int main() {
 
-    clock_t start, end;
-    start = clock();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     srand(time(NULL));
 
@@ -74,8 +75,8 @@ int main() {
     int** C = cria_matriz(ordem);
 
     multiplica_matrizes(A, B, C, ordem);
-    end = clock();
-    double tempo_total = (double)(end - start)/CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    double tempo_total = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
     printf("TEMPO DE EXECUÇÃO DO PROGRAMA: %.4f\n", tempo_total);
 
     free_matriz(A, ordem);
