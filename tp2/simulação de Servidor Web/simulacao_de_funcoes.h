@@ -13,4 +13,10 @@ void processar_consulta(int req_id);
 // Simula uma requisição pesada (ex: download de uma imagem de alta resolução).
 void processar_imagem(int req_id);
 
+// Simula o cálculo de hash de senha para login (ex: bcrypt)
+void processar_login(int req_id);
+
+// Simula o processamento/transcodificação de um vídeo (ex: YouTube upload)
+void processar_video(int req_id);
+
 #endif // SIMULADOR_DE_FUNCOES_H
