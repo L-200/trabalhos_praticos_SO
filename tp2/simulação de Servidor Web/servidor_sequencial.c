@@ -29,7 +29,7 @@ int main() {
 
     // Loop que atende um cliente de cada vez devido ao não-paralelismo
     for (i = 1; i <= num_clientes; i++) {
-        printf("Qual tipo de requisição o usuário quer fazer? Digite o número correspondente.\n");
+        printf("Qual tipo de requisição que o novo cliente quer fazer? Digite o número correspondente.\n");
         printf("1. Login (Muito Leve)\n");
         printf("2. HTML (Leve)\n");
         printf("2. Consulta ao Banco de Dados (Média)\n");
@@ -39,6 +39,7 @@ int main() {
         int tipo_requisicao;
         scanf ("%d", &tipo_requisicao);
         
+        printf("\n[SERVIDOR]: Cliente %d Chegou. Processando...\n", i);
         switch (tipo_requisicao)
         {
             case 1:
@@ -60,7 +61,6 @@ int main() {
                 printf("[ERRO]: Tipo de requisição inválido. Encerrando.\n");
                 return 1;
         }
-        printf("\n[SERVIDOR]: Cliente %d (de %d) Chegou. Processando...\n", i, num_clientes);
         
 
     }
@@ -72,7 +72,6 @@ int main() {
 
     printf("\n--- RESULTADO SEQUENCIAL ---\n");
     printf("Total de Requisicoes Atendidas: %d\n", num_clientes);
-    // Tempo teórico: num_clientes * 5 segundos
     printf("Tempo TOTAL de Processamento (Bloqueado): %.2f segundos.\n", tempo_total);
     printf("-------------------------------------------\n");
 
