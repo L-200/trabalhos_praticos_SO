@@ -1,3 +1,4 @@
+// comando para compilar: gcc servidor_sequencial.c simulacao_de_funcoes.c -o servidor_sequencial
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@ int main() {
     printf("--- SERVIDOR WEB SIMULADO: VERSAO SEQUENCIAL ---\n");
     printf("OBJETIVO: Demonstracao do bloqueio do sistema (sem threads).\n");
 
-    // 1. Entrada Dinâmica do Usuário
+    // Entrada Dinâmica do Usuário
     printf("\n[SERVIDOR]: Digite a quantidade de clientes (requisicoes) a simular: ");
     if (scanf("%d", &num_clientes) != 1 || num_clientes <= 0) {
         printf("[ERRO]: Entrada invalida. Encerrando.\n");
@@ -23,21 +24,48 @@ int main() {
     
     printf("\n[SERVIDOR]: Simulacao iniciada para %d clientes. Cada um sera atendido em serie...\n", num_clientes);
     
-    // 2. SIMULAÇÃO DE CARGA SEQUENCIAL COM MEDIÇÃO DE TEMPO
+    // SIMULAÇÃO DE CARGA SEQUENCIAL COM MEDIÇÃO DE TEMPO
     inicio = clock(); // Marca o início da execução
 
-    // Loop que atende um cliente de cada vez (FORTE BLOQUEIO)
+    // Loop que atende um cliente de cada vez devido ao não-paralelismo
     for (i = 1; i <= num_clientes; i++) {
+        printf("Qual tipo de requisição o usuário quer fazer? Digite o número correspondente.\n");
+        printf("1. Login (Muito Leve)\n");
+        printf("2. HTML (Leve)\n");
+        printf("2. Consulta ao Banco de Dados (Média)\n");
+        printf("3. Imagem (Pesada)\n");
+        printf("5. Vídeo (Muito pesada)\n");
+        
+        int tipo_requisicao;
+        scanf ("%d", &tipo_requisicao);
+        
+        switch (tipo_requisicao)
+        {
+            case 1:
+                processar_login(i);
+                break;
+            case 2:
+                processar_html(i);
+                break;
+            case 3:
+                processar_consulta(i);
+                break;
+            case 4:
+                processar_imagem(i);
+                break;
+            case 5:
+                processar_video(i);
+                break;
+            default:
+                printf("[ERRO]: Tipo de requisição inválido. Encerrando.\n");
+                return 1;
+        }
         printf("\n[SERVIDOR]: Cliente %d (de %d) Chegou. Processando...\n", i, num_clientes);
         
-        // Aqui, para simplificar a simulação, faremos todos os clientes pedirem a tarefa mais pesada (5s).
-        // Na versão interativa final, poderemos adicionar uma escolha aleatória de função.
-        
-        // Chamada da função pesada que contém o sleep(5)
-        processar_imagem(i); // BLOQUEIA o programa por 5 segundos
+
     }
 
-    // 3. FINALIZAÇÃO E CÁLCULO DE TEMPO
+    // FINALIZAÇÃO E CÁLCULO DE TEMPO
     fim = clock(); // Marca o fim da execução
     
     tempo_total = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
