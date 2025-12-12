@@ -62,9 +62,14 @@ double produtoEscalarParalelo(int tamanho, int numThreads) {
         threadData[i].vetorA = vetorA;
         threadData[i].vetorB = vetorB;
         threadData[i].inicio = i * tamanhoBloco;
-        // O último pega o resto (se a divisão não for exata)
-        threadData[i].fim = (i == numThreads - 1) ? tamanho : (i + 1) * tamanhoBloco;
         
+        // O último pega o resto (se a divisão não for exata)
+        if (i == numThreads - 1) {
+            threadData[i].fim = tamanho;
+        } else {
+            threadData[i].fim = (i + 1) * tamanhoBloco;
+        }
+
         pthread_create(&threads[i], NULL, threadWorker, (void*)&threadData[i]);
     }
 
