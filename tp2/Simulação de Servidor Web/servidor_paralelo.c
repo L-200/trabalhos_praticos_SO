@@ -60,16 +60,16 @@ int main () {
         return 1;
     }
 
-    printf("\n[SERVIDOR]: Simulacao iniciada para %d clientes. Cada um sera atendido em paralelo...\n", num_clientes);
+    printf("\n[SERVIDOR]: Simulacao iniciada para %d clientes. Cada um sera atendido em paralelo...\n\n", num_clientes);
     printf("OBS: Uma thread pode acabar no momento em que você está digitando a próxima requisição!\n");
     printf("Apenas continue digitando a requisição normalmente caso isso ocorra.\n");
-    printf("É recomendável que você digite as requisições rapidamente para ver o efeito do paralelismo.\n");
+    printf("É recomendável que você digite todas as requisições rapidamente para ver o efeito do paralelismo.\n\n");
 
     inicio = time(NULL);
 
     pthread_t threads[num_clientes];
     for (i = 1; i <= num_clientes; i++) {
-        printf("Qual tipo de requisição que o novo cliente quer fazer? Digite o número correspondente.\n");
+        printf("Qual tipo de requisição que o cliente %d quer fazer? Digite o número correspondente.\n", i);
         printf("1. Login (Muito Leve)\n");
         printf("2. HTML (Leve)\n");
         printf("2. Consulta ao Banco de Dados (Média)\n");
