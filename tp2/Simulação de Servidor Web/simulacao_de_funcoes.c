@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <unistd.h> 
 
+void processar_login(int req_id) {
+    int tempo = 0.5; // 0.5 segundos
+    printf("[REQUISICAO %d]: INICIO - Processando Login (Tarefa Muito Leve, %ds)...\n", req_id, tempo);
+    sleep(tempo);
+    printf("[REQUISICAO %d]: FIM - Login concluido.\n", req_id);
+}
+
 void processar_html(int req_id) {
     int tempo = 1; // 1 segundo
     printf("[REQUISICAO %d]: INICIO - Processando HTML (Tarefa Leve, %ds)...\n", req_id, tempo);
@@ -23,3 +30,11 @@ void processar_imagem(int req_id) {
     sleep(tempo);
     printf("[REQUISICAO %d]: FIM - Imagem concluida.\n", req_id);
 }
+
+void processar_video(int req_id){
+    int tempo = 8; // 8 segundos
+    printf("[REQUISICAO %d]: INICIO - Processando Video (Tarefa Muito Pesada, %ds)...\n", req_id, tempo);
+    sleep(tempo);
+    printf("[REQUISICAO %d]: FIM - Video concluido.\n", req_id);
+}
+
