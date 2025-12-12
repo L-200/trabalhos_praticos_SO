@@ -4,12 +4,12 @@
 #include <unistd.h> 
 
 void processar_login(int req_id) {
-    int tempo = 0.5; // 0.5 segundos
-    printf("[REQUISICAO %d]: INICIO - Processando Login (Tarefa Muito Leve, %ds)...\n", req_id, tempo);
-    sleep(tempo);
-    printf("[REQUISICAO %d]: FIM - Login concluido.\n", req_id);
+   // Para 0.5s, usamos 500.000 microssegundos e usleep()
+    long tempo_us = 500000;
+    printf("        [REQUISIÇÃO %d]: INICIO - Processando Login (0.5s)...\n", req_id);
+    usleep(tempo_us); 
+    printf("        [REQUISIÇÃO %d]: FIM - Login concluido.\n", req_id);
 }
-
 void processar_html(int req_id) {
     int tempo = 1; // 1 segundo
     printf("[REQUISICAO %d]: INICIO - Processando HTML (Tarefa Leve, %ds)...\n", req_id, tempo);
