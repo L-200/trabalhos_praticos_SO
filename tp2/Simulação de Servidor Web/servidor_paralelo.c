@@ -1,4 +1,4 @@
-// comando para compilar: gcc servidor_paralelo.c simulacao_de_funcoes.c -o servidor_sequencial
+// comando para compilar: gcc servidor_paralelo.c simulacao_de_funcoes.c -o servidor_paralelo
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -33,7 +33,7 @@ void trata_requisicao(void* Args) {
         break;
         
         case 5:
-        processar_video;
+        processar_video(dados->tipo_req);
         break;
     }
 
@@ -45,7 +45,7 @@ void trata_requisicao(void* Args) {
 
 int main () {
     
-    clock_t inicio, fim;
+    time_t inicio, fim;
     double tempo_total;
 
     int num_clientes;
@@ -63,8 +63,10 @@ int main () {
     printf("\n[SERVIDOR]: Simulacao iniciada para %d clientes. Cada um sera atendido em paralelo...\n", num_clientes);
     printf("OBS: Uma thread pode acabar no momento em que você está digitando a próxima requisição!\n");
     printf("Apenas continue digitando a requisição normalmente caso isso ocorra.\n");
+    printf("É recomendável que você digite as requisições rapidamente para ver o efeito do paralelismo.\n");
 
-    inicio = clock();
+    inicio = time(NULL);
+
     pthread_t threads[num_clientes];
     for (i = 1; i <= num_clientes; i++) {
         printf("Qual tipo de requisição que o novo cliente quer fazer? Digite o número correspondente.\n");
@@ -92,8 +94,8 @@ int main () {
         pthread_join(threads[i], NULL);
     }
 
-    fim = clock();
-    tempo_total = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+    fim = time(NULL);
+    tempo_total = difftime(fim, inicio);
 
     printf("\n[SERVIDOR]: Todas as requisicoes foram processadas.\n");
     printf("[SERVIDOR]: Tempo total de processamento: %.2f segundos.\n", tempo_total);

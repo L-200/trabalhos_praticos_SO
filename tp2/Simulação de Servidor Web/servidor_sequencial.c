@@ -6,7 +6,7 @@
 
 int main() {
     // Variáveis de medição de tempo
-    clock_t inicio, fim;
+    time_t inicio, fim;
     double tempo_total;
     
     int num_clientes; // Variável para armazenar a entrada do usuário com relação à quantidade de clientes (requisições) a serem processadas
@@ -25,15 +25,15 @@ int main() {
     printf("\n[SERVIDOR]: Simulacao iniciada para %d clientes. Cada um sera atendido em serie...\n", num_clientes);
     
     // SIMULAÇÃO DE CARGA SEQUENCIAL COM MEDIÇÃO DE TEMPO
-    inicio = clock(); // Marca o início da execução
+    inicio = time(NULL); // Marca o início da execução
 
     // Loop que atende um cliente de cada vez devido ao não-paralelismo
     for (i = 1; i <= num_clientes; i++) {
         printf("Qual tipo de requisição que o novo cliente quer fazer? Digite o número correspondente.\n");
         printf("1. Login (Muito Leve)\n");
         printf("2. HTML (Leve)\n");
-        printf("2. Consulta ao Banco de Dados (Média)\n");
-        printf("3. Imagem (Pesada)\n");
+        printf("3. Consulta ao Banco de Dados (Média)\n");
+        printf("4. Imagem (Pesada)\n");
         printf("5. Vídeo (Muito pesada)\n");
         
         int tipo_requisicao;
@@ -66,9 +66,8 @@ int main() {
     }
 
     // FINALIZAÇÃO E CÁLCULO DE TEMPO
-    fim = clock(); // Marca o fim da execução
-    
-    tempo_total = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+    fim = time(NULL);
+    tempo_total = difftime(fim, inicio);
 
     printf("\n--- RESULTADO SEQUENCIAL ---\n");
     printf("Total de Requisicoes Atendidas: %d\n", num_clientes);
