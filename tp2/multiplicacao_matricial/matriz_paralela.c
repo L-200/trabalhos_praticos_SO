@@ -4,6 +4,8 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "benchmarking.h"
+#include "matriz_paralela.h"
 typedef struct {
     int thread_id;
     int num_threads;
@@ -13,44 +15,6 @@ typedef struct {
     int** C;
 } ThreadData;
 
-int** cria_matriz(int ordem) {
-
-    int **matriz = (int**) malloc(ordem* sizeof(int*));
-    if (matriz == NULL) {
-        printf("ERRO DE ALOCAÇÃO DE LINHAS\n");
-    } 
-
-    for (int i = 0; i < ordem; i++) {
-        matriz[i] = (int*) malloc (ordem * sizeof(int));
-        if (matriz[i] ==NULL) {
-            printf("ERRO DE ALOCAÇÃO DE COLUNAS\n");
-        }
-    }
-
-    return matriz;
-}
-
-void preenche_matriz(int** matriz, int ordem) {
-    printf("Preenchendo uma matriz, isso pode levar um tempinho...\n");
-    int i, j;
-
-    for (i = 0; i < ordem; i++) {
-
-        for (j = 0; j < ordem; j++) {
-            matriz[i][j] = rand() % 1000;
-        }
-    }
-}
-
-void free_matriz (int** matriz, int ordem) {
-    int i;
-
-    for (i = 0; i < ordem; i++) {
-        free(matriz[i]);
-    }
-
-    free(matriz);
-}
 
 // MÉTODO ESCOLHIDO: dividir as linhas pela quantidade de threads disponiveis
 
@@ -87,7 +51,7 @@ void *thread_multiplica(void* args) {
     pthread_exit(NULL);
 }
 
-int main () {
+float chama_paralela () {
 
     struct timespec start, end;
     srand(time(NULL));
@@ -132,5 +96,5 @@ int main () {
     free_matriz(B, ordem);
     free_matriz(C, ordem);
 
-    return 0;
+    return tempo_total;
 }

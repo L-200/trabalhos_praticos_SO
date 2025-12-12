@@ -2,37 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-int** cria_matriz(int ordem) {
-
-    int **matriz = (int**) malloc(ordem* sizeof(int*));
-    if (matriz == NULL) {
-        printf("ERRO DE ALOCAÇÃO DE LINHAS\n");
-    } 
-
-    for (int i = 0; i < ordem; i++) {
-        matriz[i] = (int*) malloc (ordem * sizeof(int));
-        if (matriz[i] ==NULL) {
-            printf("ERRO DE ALOCAÇÃO DE COLUNAS\n");
-        }
-    }
-
-    return matriz;
-}
-
-void preenche_matriz (int** matriz, int ordem) {
-    printf("Criando matriz, isso pode levar um tempo...\n");
-    int i, j;
-
-    for(int i = 0; i < ordem; i++) {
-
-        for (j = 0; j < ordem; j++) {
-            matriz[i][j] = rand() % 1000;
-        }
-    }
-
-    printf("Matriz criada com sucesso\n");
-}
+#include "benchmarking.h"
+#include "matriz_tradicional.h"
 
 void multiplica_matrizes(int **A, int **B, int **C, int ordem) {
     printf("Multiplicando as matrizes. Isso pode levar mais tempo ainda...\n");
@@ -46,17 +17,7 @@ void multiplica_matrizes(int **A, int **B, int **C, int ordem) {
     }
 }
 
-void free_matriz(int** matriz, int ordem) {
-    int i;
-
-    for (int i = 0; i < ordem; i++) {
-        free(matriz[i]);
-    }
-
-    free(matriz);
-}
-
-int main() {
+float chama_tradicional() {
 
     struct timespec start, end;
 
@@ -83,5 +44,5 @@ int main() {
     free_matriz(B, ordem);
     free_matriz(C, ordem);
 
-    return 0;
+    return tempo_total;
 }
