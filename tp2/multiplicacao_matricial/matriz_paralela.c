@@ -90,7 +90,6 @@ void *thread_multiplica(void* args) {
 int main () {
 
     struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start);
     srand(time(NULL));
 
     int ordem, num_threads;
@@ -99,6 +98,7 @@ int main () {
     printf("Defina a quantidade de threads multiplicadoras: ");
     scanf("%d", &num_threads);
 
+    clock_gettime(CLOCK_MONOTONIC, &start);
     int** A = cria_matriz(ordem);
     preenche_matriz(A, ordem);
     int** B = cria_matriz(ordem);

@@ -59,13 +59,13 @@ void free_matriz(int** matriz, int ordem) {
 int main() {
 
     struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start);
 
     srand(time(NULL));
 
     printf("Defina a ordem das matrizes:");
     int ordem;
     scanf("%d", &ordem);
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     int** A = cria_matriz(ordem);
     preenche_matriz(A, ordem);
