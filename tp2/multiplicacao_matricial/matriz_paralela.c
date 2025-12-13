@@ -79,7 +79,7 @@ void salvar_metricas(const char* nome_base, int ordem, int threads, double tempo
     // Verifica cabeçalho
     fseek(arquivo, 0, SEEK_END);
     if (ftell(arquivo) == 0) {
-        fprintf(arquivo, "Ordem,Threads,CPUs_Disp,Tempo(s)\n");
+        fprintf(arquivo, "Ordem,Threads,Tempo(s)\n");
     }
 
     fprintf(arquivo, "%d,%d,%.4f\n", ordem, threads, tempo);
