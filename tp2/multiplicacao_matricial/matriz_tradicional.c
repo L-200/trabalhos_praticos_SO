@@ -2,8 +2,81 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "benchmarking.h"
-#include "matriz_tradicional.h"
+#include <unistd.h>
+
+int** cria_matriz(int ordem) {
+
+    int **matriz = (int**) malloc(ordem* sizeof(int*));
+    if (matriz == NULL) {
+        printf("ERRO DE ALOCAÇÃO DE LINHAS\n");
+    } 
+
+    for (int i = 0; i < ordem; i++) {
+        matriz[i] = (int*) malloc (ordem * sizeof(int));
+        if (matriz[i] ==NULL) {
+            printf("ERRO DE ALOCAÇÃO DE COLUNAS\n");
+        }
+    }
+
+    return matriz;
+}
+
+void preenche_matriz (int** matriz, int ordem) {
+    printf("Criando matriz, isso pode levar um tempo...\n");
+    int i, j;
+
+    for(int i = 0; i < ordem; i++) {
+
+        for (j = 0; j < ordem; j++) {
+            matriz[i][j] = rand() % 1000;
+        }
+    }
+
+    printf("Matriz criada com sucesso\n");
+}
+
+void free_matriz(int** matriz, int ordem) {
+    int i;
+
+    for (int i = 0; i < ordem; i++) {
+        free(matriz[i]);
+    }
+
+    free(matriz);
+}
+
+void salvar_metricas(const char* nome_base, int ordem, int threads, double tempo) {
+    // Pega o número de CPUs
+    long num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+
+    // Cria um buffer para armazenar o nome final do arquivo
+    char nome_arquivo_completo[256];
+
+    // Formata o nome: "nome_base" + "_" + "num_cpus" + "cpus.csv"
+    // Além disso, adiciona o diretório "data/" no início do caminho
+    snprintf(nome_arquivo_completo, sizeof(nome_arquivo_completo), 
+             "data/%s_%ldcpus.csv", nome_base, num_cpus);
+
+    FILE *arquivo = fopen(nome_arquivo_completo, "a");
+    
+    // Verificação de segurança essencial
+    if (arquivo == NULL) {
+        printf("ERRO CRÍTICO: Não foi possível criar o arquivo em '%s'.\n", nome_arquivo_completo);
+        printf("Verifique se a pasta 'data' realmente existe no diretório atual.\n");
+        return;
+    }
+
+    // Verifica cabeçalho
+    fseek(arquivo, 0, SEEK_END);
+    if (ftell(arquivo) == 0) {
+        fprintf(arquivo, "Ordem,Threads,CPUs_Disp,Tempo(s)\n");
+    }
+
+    fprintf(arquivo, "%d,%d,%.4f\n", ordem, threads, tempo);
+    
+    fclose(arquivo);
+    printf("Métrica salva em '%s'\n", nome_arquivo_completo);
+}
 
 void multiplica_matrizes(int **A, int **B, int **C, int ordem) {
     printf("Multiplicando as matrizes. Isso pode levar mais tempo ainda...\n");
@@ -17,7 +90,7 @@ void multiplica_matrizes(int **A, int **B, int **C, int ordem) {
     }
 }
 
-float chama_tradicional() {
+int main() {
 
     struct timespec start, end;
 
@@ -44,7 +117,7 @@ float chama_tradicional() {
     free_matriz(B, ordem);
     free_matriz(C, ordem);
 
-    salvar_metricas("metricas_sequencial.csv", ordem, 1, tempo_total);
+    salvar_metricas("metricas_tradicional", ordem, 1, tempo_total);
 
-    return tempo_total;
+    return 0;
 }
