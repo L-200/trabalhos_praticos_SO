@@ -17,23 +17,23 @@ void trata_requisicao(void* Args) {
 
     switch(dados->tipo_req) {
         case 1: 
-        processar_login(dados->tipo_req); 
+        processar_login(dados->id); 
         break;
         
         case 2:
-        processar_html(dados->tipo_req);
+        processar_html(dados->id);
         break;
         
         case 3:
-        processar_consulta(dados->tipo_req);
+        processar_consulta(dados->id);
         break;
         
         case 4:
-        processar_imagem(dados->tipo_req);
+        processar_imagem(dados->id);
         break;
         
         case 5:
-        processar_video(dados->tipo_req);
+        processar_video(dados->id);
         break;
     }
 
@@ -72,8 +72,8 @@ int main () {
         printf("Qual tipo de requisição que o cliente %d quer fazer? Digite o número correspondente.\n", i);
         printf("1. Login (Muito Leve)\n");
         printf("2. HTML (Leve)\n");
-        printf("2. Consulta ao Banco de Dados (Média)\n");
-        printf("3. Imagem (Pesada)\n");
+        printf("3. Consulta ao Banco de Dados (Média)\n");
+        printf("4. Imagem (Pesada)\n");
         printf("5. Vídeo (Muito pesada)\n");
 
         int tipo_requisicao;
