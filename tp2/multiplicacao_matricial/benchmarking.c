@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "benchmarking.h"
 #include "matriz_tradicional.h"
@@ -46,6 +47,31 @@ void free_matriz(int** matriz, int ordem) {
     }
 
     free(matriz);
+}
+
+void salvar_metricas(const char* nome_arquivo, int ordem, int threads, double tempo) {
+    FILE *arquivo = fopen(nome_arquivo, "a");
+    
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo para salvar métricas.\n");
+        return;
+    }
+
+    // Pega o número de CPUs (núcleos lógicos) disponíveis na máquina
+    long num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+
+    // Verifica se o arquivo está vazio para escrever o cabeçalho
+    fseek(arquivo, 0, SEEK_END);
+    if (ftell(arquivo) == 0) {
+        
+        fprintf(arquivo, "Ordem,Threads,CPUs_Disp,Tempo(s)\n");
+    }
+
+    // Escreve os dados incluindo o número de CPUs
+    fprintf(arquivo, "%d,%d,%ld,%.4f\n", ordem, threads, num_cpus, tempo);
+    
+    fclose(arquivo);
+    printf("Métrica salva em '%s' (CPUs detectadas: %ld)\n", nome_arquivo, num_cpus);
 }
 
 int main() {

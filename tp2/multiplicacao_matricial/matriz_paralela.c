@@ -96,5 +96,6 @@ float chama_paralela () {
     free_matriz(B, ordem);
     free_matriz(C, ordem);
 
+    salvar_metricas("metricas_paralela.csv", ordem, num_threads, tempo_total);
     return tempo_total;
 }

@@ -44,5 +44,7 @@ float chama_tradicional() {
     free_matriz(B, ordem);
     free_matriz(C, ordem);
 
+    salvar_metricas("metricas_sequencial.csv", ordem, 1, tempo_total);
+
     return tempo_total;
 }
