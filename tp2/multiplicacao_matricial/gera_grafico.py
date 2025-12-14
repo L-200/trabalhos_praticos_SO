@@ -63,6 +63,16 @@ def gerar_graficos_separados(n_cpus):
     print(f"Salvo: {nome_arq_par}")
 
 if __name__ == "__main__":
-    # Pode alterar para input() se desejar interatividade
-    qtd_cpus = 16
-    gerar_graficos_separados(qtd_cpus)
+    try:
+        # Pede ao usuário para digitar o número
+        entrada = input("Digite a quantidade de CPUs para gerar os gráficos: ")
+        
+        # Converte o texto digitado para número inteiro
+        qtd_cpus = int(entrada)
+        
+        # Chama a função
+        print(f"Processando dados para {qtd_cpus} CPUs...")
+        gerar_graficos_separados(qtd_cpus)
+        
+    except ValueError:
+        print("Erro: Por favor, digite um número inteiro válido.")
