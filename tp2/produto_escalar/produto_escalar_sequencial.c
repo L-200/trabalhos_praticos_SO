@@ -17,7 +17,7 @@ typedef struct {
 // ----- VARIAVEIS GLOBAIS -------
 double* vetorA;
 double* vetorB;
-int tamanhos_vet[10] = {100, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500};
+int tamanhos_vet[10] = {100000, 500000, 1000000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000, 4500000};
 
 int QTD_TAMANHO_VET;
 int QTD_THREADS;

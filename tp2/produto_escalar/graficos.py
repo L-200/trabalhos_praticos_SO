@@ -23,11 +23,13 @@ for qtd_thread in qtd_threads.unique():
     tempos_paralelo  = pd.to_numeric(df_thread["tempo(ms)"])
     tamanho_vet = pd.to_numeric(df_thread["tamanho_vet"])
     
-    plt.figure()  
-    plt.plot(tamanho_vet, tempos_paralelo, marker='o')
-    plt.plot(tamanho_vet, tempos_sequencial, marker='o')
+    plt.figure(figsize=(10, 6))  
+    plt.plot(tamanho_vet, tempos_paralelo, label='tempos_paralelo', marker='o')
+    plt.plot(tamanho_vet, tempos_sequencial, label='tempos_sequencial', marker='o')
+    plt.legend(loc='upper left') # Adicione esta linha! loc='upper left' é um bom lugar.
     plt.xlabel("TAMANHO DO VETOR")
     plt.ylabel("TEMPO (ms)")
+    plt.ylim(0, 0.08)
     plt.title("RESULTADOS DOS CÁLCULOS DO PRODUTO INTERNO")
     plt.grid(True)
 
