@@ -17,7 +17,7 @@ typedef struct {
 // ----- VARIAVEIS GLOBAIS -------
 double* vetorA;
 double* vetorB;
-int tamanhos_vet[10] = {100000, 500000, 1000000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000, 4500000};
+int tamanhos_vet[10] = {10000, 50000, 100000, 250000, 500000, 1000000, 2000000, 3000000, 5000000, 6000000};
 int qtd_threads[10] = {2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 int TAMANHO_VETOR;
@@ -142,6 +142,8 @@ int main() {
             printf("============================ LOG DAS THREADS ============================\n");
             clock_gettime(CLOCK_MONOTONIC, &start);
             srand(time(NULL));
+
+
             double resPar = produtoEscalarParalelo(TAMANHO_VETOR, QTD_THREADS);
             clock_gettime(CLOCK_MONOTONIC, &end);
             printf("============================ FIM DAS THREADS ============================\n");
