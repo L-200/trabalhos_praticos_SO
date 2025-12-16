@@ -1,0 +1,86 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+# importar os arquivos e titularizar
+colunas_sequencial = ["tamanho_vet", "resultado_PI", "tempo(ms)"]
+colunas_paralelo = ["qtd_threads", "tamanho_vet", "resultado_PI", "tempo(ms)"]
+df_paralelo = pd.read_csv("dados_resultados/dados_paralelo.csv", header=None, names=colunas_paralelo)
+df_sequencial = pd.read_csv("dados_resultados/dados_sequencial.csv", header=None, names=colunas_sequencial)
+
+# Tirar linha de titulo colacada pelo script em C
+df_paralelo = df_paralelo[1:]
+df_sequencial = df_sequencial[1:]
+
+# plotar gráfico para cada quantidade de thread
+qtd_threads = df_paralelo["qtd_threads"]
+tempos_sequencial = pd.to_numeric(df_sequencial["tempo(ms)"])
+
+# plotar gráficos de  TAM_VETOR X TEMPO_EXEC
+for qtd_thread in qtd_threads.unique():
+
+    #separar dados
+    df_thread = df_paralelo[df_paralelo["qtd_threads"] == qtd_thread]
+
+    tempos_paralelo  = pd.to_numeric(df_thread["tempo(ms)"])
+    tamanho_vet = pd.to_numeric(df_thread["tamanho_vet"])
+    tamanho_vet = tamanho_vet.astype(int)
+    print(tamanho_vet)
+
+    
+    plt.figure(figsize=(10, 6))  
+    plt.plot(tamanho_vet, tempos_paralelo, label=f'tempos_paralelo: {qtd_thread} Threads', marker='o')
+    plt.plot(tamanho_vet, tempos_sequencial, label='tempos_sequencial', marker='o')
+    plt.ticklabel_format(style='plain', axis='x')
+
+    plt.legend(loc='upper left') 
+    plt.xlabel("TAMANHO DO VETOR")
+    plt.ylabel("TEMPO (ms)")
+    plt.ylim(0, 0.6)
+    plt.title("TEMPOS DOS CÁLCULOS DO PRODUTO INTERNO")
+    plt.grid(True)
+
+    plt.savefig(f"./graficos/RESULTADOS_COM_{qtd_thread}_THREADS.png")
+    plt.show()
+    plt.close()
+
+
+
+
+# plotar gráficos de  TAM_VETOR X SPEEDUP
+plt.figure(figsize=(10, 6))  
+for qtd_thread in qtd_threads.unique():
+    print(qtd_thread)
+
+    df_thread = df_paralelo[df_paralelo["qtd_threads"] == qtd_thread]
+    
+    tempos_paralelo  = pd.to_numeric(df_thread["tempo(ms)"])
+    tamanho_vet = pd.to_numeric(df_thread["tamanho_vet"])
+    tamanho_vet = tamanho_vet.astype(int)
+
+    
+
+
+    speedup = tempos_sequencial.to_numpy() / tempos_paralelo.to_numpy()
+    print(speedup)
+
+    plt.plot(tamanho_vet, speedup, label=f'speedup - {qtd_thread} Threads', marker='o')
+    plt.ticklabel_format(style='plain', axis='x')
+    plt.legend(loc='upper left')
+
+
+plt.xlabel("TAMANHO DO VETOR")
+plt.ylabel("SPEEDUP (Ts/Tp)")
+plt.ylim(0, 5)
+plt.title("MÉTRICAS DOS CÁLCULOS DO PRODUTO INTERNO")
+plt.grid(True)
+plt.savefig(f"./graficos/MÉTRICAS_SPEEDUP_THREADS.png")
+plt.show()
+plt.close()
+
+
+
+
+
+
+
