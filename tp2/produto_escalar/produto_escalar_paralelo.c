@@ -149,8 +149,13 @@ int main(int argc, char* argv[]) {
 
 
      // --- Entrada do usuário (TAMANHOS DE VETORES) ---
-    printf("Digite a quantidade de tamanhos diferentes de vetor para comparação(ex: 2 resultará testes para: [100, 200]): ");
-    scanf("%d", &QTD_TAMANHO_VET);
+    QTD_TAMANHO_VET = 21;
+
+    if(QTD_TAMANHO_VET>30){
+        printf("Quantidade acima do esperado.\n");
+        return 0;
+    }
+
 
 
     

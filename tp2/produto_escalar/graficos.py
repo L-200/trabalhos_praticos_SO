@@ -36,7 +36,7 @@ for qtd_thread in qtd_threads.unique():
     plt.legend(loc='upper left') 
     plt.xlabel("TAMANHO DO VETOR")
     plt.ylabel("TEMPO (ms)")
-    plt.ylim(0, 0.6)
+    plt.ylim(0, 1)
     plt.title("TEMPOS DOS CÁLCULOS DO PRODUTO INTERNO")
     plt.grid(True)
 
